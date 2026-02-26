@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import os
 
 # --- Constants ---
 MAX_FILE_SIZE_MB = 5
@@ -55,12 +56,19 @@ def process_image(uploaded_file):
 def extract_text_gemini(image, prompt):
     """Extract text using Gemini securely loaded API Key"""
     try:
-        # Require API Key to be present in Streamlit Secrets
+        # Require API Key to be present in Streamlit Secrets or Environment Variables
         api_key = None
-        if "GEMINI_API_KEY" in st.secrets:
-            api_key = st.secrets["GEMINI_API_KEY"]
-        elif "general" in st.secrets and "GEMINI_API_KEY" in st.secrets["general"]:
-            api_key = st.secrets["general"]["GEMINI_API_KEY"]
+        
+        # 1. Try checking standard OS environment variables first (often easier for cloud deployments)
+        if "GEMINI_API_KEY" in os.environ:
+             api_key = os.environ["GEMINI_API_KEY"]
+             
+        # 2. Fallback to Streamlit Secrets
+        if not api_key:
+            if "GEMINI_API_KEY" in st.secrets:
+                api_key = st.secrets["GEMINI_API_KEY"]
+            elif "general" in st.secrets and "GEMINI_API_KEY" in st.secrets["general"]:
+                api_key = st.secrets["general"]["GEMINI_API_KEY"]
             
         if not api_key:
              return None, "サーバー側でAPIキーが設定されていません。管理者に連絡してください。"
